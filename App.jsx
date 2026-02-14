@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-const CLAUDE_API = "https://api.anthropic.com/v1/messages";
+const API_ENDPOINT = "/api/generate";
 const MODEL = "claude-sonnet-4-5-20250929";
 
 /* ─── Styles ─── */
@@ -193,7 +193,7 @@ export default function App() {
 
   /* 単純な1回APIコール（ツールなし）*/
   const callDirect = async (siteInfo) => {
-    const res = await fetch(CLAUDE_API, {
+    const res = await fetch(API_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -213,7 +213,7 @@ export default function App() {
   /* web_search付きAPIコール + tool_use処理 */
   const callWithSearch = async (userMsg) => {
     // Step A: web_search起動
-    const resA = await fetch(CLAUDE_API, {
+    const resA = await fetch(API_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -239,7 +239,7 @@ export default function App() {
       .filter(b => b.type === "tool_use")
       .map(b => ({ type: "tool_result", tool_use_id: b.id, content: "Search completed." }));
 
-    const resB = await fetch(CLAUDE_API, {
+    const resB = await fetch(API_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
