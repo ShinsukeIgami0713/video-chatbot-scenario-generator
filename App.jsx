@@ -324,7 +324,7 @@ export default function App() {
       <header className="header">
         <div className="logo-badge">▶</div>
         <div className="header-text">
-          <h1>Video Chatbot Scenario Generator</h1>
+          <h1>BonsAI Video Scenario Generator</h1>
           <p>企業URLから動画チャットボットシナリオ（樹形図＋スクリプト）を自動生成</p>
         </div>
       </header>
