@@ -63,6 +63,14 @@ const style = `
   .dl-btn { background: transparent; border: 1px solid #2a2a2a; color: #666; border-radius: 7px; padding: 7px 14px; font-size: 11px; cursor: pointer; transition: all .2s; font-family: 'Noto Sans JP', sans-serif; }
   .dl-btn:hover { border-color: #FF6B00; color: #FF6B00; }
 
+  .settings { display: flex; gap: 20px; margin-top: 18px; flex-wrap: wrap; }
+  .setting-group { display: flex; flex-direction: column; gap: 8px; }
+  .setting-label { font-size: 10px; font-weight: 700; color: #555; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Space Mono', monospace; }
+  .setting-options { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opt-btn { background: #0a0a0a; border: 1px solid #2c2c2c; border-radius: 7px; padding: 8px 14px; font-size: 12px; color: #888; cursor: pointer; transition: all .2s; font-family: 'Noto Sans JP', sans-serif; white-space: nowrap; }
+  .opt-btn:hover { border-color: #555; color: #ccc; }
+  .opt-btn.active { background: #1c0e00; border-color: #FF6B00; color: #FF6B00; font-weight: 700; }
+
   .empty { text-align: center; padding: 80px 40px; color: #333; }
   .empty h3 { font-size: 16px; color: #444; margin-bottom: 8px; }
   .empty p { font-size: 12px; line-height: 1.7; }
@@ -176,30 +184,50 @@ export default function App() {
   const [error, setError] = useState("");
   const [debugRaw, setDebugRaw] = useState("");
   const [showDebug, setShowDebug] = useState(false);
+  const [nodeCount, setNodeCount] = useState(13);
+  const [scriptCount, setScriptCount] = useState(1);
+  const [purpose, setPurpose] = useState("CV最大化");
 
-  const SYSTEM = `あなたは企業の動画チャットボットシナリオ設計の専門家です。
+  const NODE_STRUCTURES = {
+    4: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)\n- id=2〜4: 第1階層の選択肢 3個 (type=branch, parent_id="1", 各5〜8秒)\n- 第2階層なし\n- 合計ノード数: 4個`,
+    13: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)\n- id=2〜4: 第1階層の選択肢 3〜4個 (type=branch, parent_id="1", 各5〜8秒)\n- id=2-1,2-2,3-1,3-2…: 第2階層 各親に2〜3個 (type=sub, parent_idは親のid, 各8〜12秒)\n- 合計ノード数: 約13個`,
+    40: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)\n- id=2〜5: 第1階層の選択肢 4〜5個 (type=branch, parent_id="1", 各5〜8秒)\n- id=2-1,2-2,3-1,3-2…: 第2階層 各親に3〜4個 (type=sub, parent_idは親のid, 各8〜12秒)\n- id=2-1-1,2-1-2…: 第3階層 各親に2〜3個 (type=detail, parent_idは親のid, 各10〜15秒)\n- 合計ノード数: 約40個`,
+  };
+
+  const PURPOSE_PROMPTS = {
+    "CV最大化": "コンバージョン（問い合わせ・申し込み）を最大化することが目的です。各ノードのCTAは具体的なアクション（無料相談・資料請求・申し込み等）に誘導し、スクリプトではベネフィットと緊急性を強調してください。",
+    "理解促進": "製品・サービスの理解を深めることが目的です。スクリプトでは機能・特徴・使い方を丁寧にわかりやすく説明し、専門用語は避け、具体例を交えてください。CTAは詳細ページや導入事例への誘導を中心にしてください。",
+    "ブランド認知": "ブランドの認知度向上と好感度アップが目的です。スクリプトでは企業のビジョン・ストーリー・強みを印象的に伝え、感情に訴える表現を使ってください。CTAはSNSフォローやブランドサイトへの誘導を含めてください。",
+    "リード獲得": "見込み顧客のリード情報獲得が目的です。スクリプトでは課題への共感と解決策の提示を行い、CTAではホワイトペーパーDL・メルマガ登録・無料トライアルなどリード獲得につながるアクションに誘導してください。",
+  };
+
+  const buildSystem = () => `あなたは企業の動画チャットボットシナリオ設計の専門家です。
 企業URLを分析し、以下のJSON形式のみを出力してください。説明文・コードブロック・前置き・後置きは一切不要です。
 
 {"company_name":"企業名","brand_color":"#HEX","nodes":[{"id":"1","parent_id":null,"type":"opening","label":"Opening","question":"Opening","script":"スクリプト本文","chars":80,"seconds":11,"cta_label":"CTA文言","cta_link":"https://...","detail_label":null,"detail_link":null},{"id":"2","parent_id":"1","type":"branch","label":"質問ラベル","question":"質問文","script":"スクリプト本文","chars":42,"seconds":6,"cta_label":"CTA文言","cta_link":"https://...","detail_label":"詳細はこちら","detail_link":"https://..."}]}
 
 構造ルール:
-- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)
-- id=2〜4: 第1階層の選択肢 3〜4個 (type=branch, parent_id="1", 各5〜8秒)
-- id=2-1,2-2,3-1,3-2…: 第2階層 各親に2〜3個 (type=sub, parent_idは親のid, 各8〜12秒)
-- 合計ノード数: 10〜18個
+${NODE_STRUCTURES[nodeCount]}
 - 1秒≒7文字
+- トークスクリプトのバリエーション: 各ノードにつき${scriptCount}パターンのscriptを生成してください。${scriptCount > 1 ? `scriptフィールドは配列にして${scriptCount}個の異なる表現パターンを含めてください。` : ""}
+
+目的:
+${PURPOSE_PROMPTS[purpose]}
 
 絶対に守ること: 出力はJSON文字列のみ。{ で始まり } で終わること。`;
 
+  const maxTokens = nodeCount >= 40 ? 8000 : 4000;
+
   /* 単純な1回APIコール（ツールなし）*/
   const callDirect = async (siteInfo) => {
+    const sys = buildSystem();
     const res = await fetch(API_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 4000,
-        system: SYSTEM,
+        max_tokens: maxTokens,
+        system: sys,
         messages: [{
           role: "user",
           content: `以下の企業情報をもとにシナリオJSONを生成してください。JSONのみ出力。\n\n${siteInfo}`,
@@ -212,14 +240,15 @@ export default function App() {
 
   /* web_search付きAPIコール + tool_use処理 */
   const callWithSearch = async (userMsg) => {
+    const sys = buildSystem();
     // Step A: web_search起動
     const resA = await fetch(API_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 4000,
-        system: SYSTEM,
+        max_tokens: maxTokens,
+        system: sys,
         messages: [{ role: "user", content: userMsg }],
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         tool_choice: { type: "auto" },
@@ -244,8 +273,8 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 4000,
-        system: SYSTEM,
+        max_tokens: maxTokens,
+        system: sys,
         messages: [
           { role: "user", content: userMsg },
           { role: "assistant", content: dataA.content },
@@ -299,7 +328,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [url]);
+  }, [url, nodeCount, scriptCount, purpose]);
 
   const downloadCSV = () => {
     if (!scenario) return;
@@ -342,6 +371,33 @@ export default function App() {
             <button className="gen-btn" onClick={generate} disabled={loading}>
               {loading ? "生成中..." : "🎬 シナリオ生成"}
             </button>
+          </div>
+
+          <div className="settings">
+            <div className="setting-group">
+              <span className="setting-label">ノード数</span>
+              <div className="setting-options">
+                {[4, 13, 40].map(v => (
+                  <button key={v} className={`opt-btn${nodeCount === v ? " active" : ""}`} onClick={() => setNodeCount(v)}>{v}</button>
+                ))}
+              </div>
+            </div>
+            <div className="setting-group">
+              <span className="setting-label">スクリプト数</span>
+              <div className="setting-options">
+                {[1, 2, 3, 5].map(v => (
+                  <button key={v} className={`opt-btn${scriptCount === v ? " active" : ""}`} onClick={() => setScriptCount(v)}>{v}</button>
+                ))}
+              </div>
+            </div>
+            <div className="setting-group">
+              <span className="setting-label">目的</span>
+              <div className="setting-options">
+                {["CV最大化", "理解促進", "ブランド認知", "リード獲得"].map(v => (
+                  <button key={v} className={`opt-btn${purpose === v ? " active" : ""}`} onClick={() => setPurpose(v)}>{v}</button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {loading && (
