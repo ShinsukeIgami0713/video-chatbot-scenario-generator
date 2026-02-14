@@ -256,8 +256,33 @@ ${PURPOSE_PROMPTS[purpose]}
 
   const maxTokens = nodeCount >= 40 ? 8000 : 4000;
 
-  /* 単純な1回APIコール（ツールなし）*/
-  const callDirect = async (siteInfo) => {
+  /* URLを直接フェッチして企業情報を取得 */
+  const fetchSiteInfo = async (targetUrl) => {
+    const res = await fetch("/api/fetch-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: targetUrl }),
+    });
+    if (!res.ok) throw new Error(`URL取得エラー: ${res.status}`);
+    return res.json();
+  };
+
+  /* フェッチ結果を構造化テキストに変換 */
+  const formatSiteInfo = (data) => {
+    const parts = [`企業URL: ${data.url}`];
+    if (data.title) parts.push(`サイトタイトル: ${data.title}`);
+    if (data.ogTitle && data.ogTitle !== data.title) parts.push(`OGタイトル: ${data.ogTitle}`);
+    if (data.metaDescription) parts.push(`説明文: ${data.metaDescription}`);
+    if (data.ogDescription && data.ogDescription !== data.metaDescription) parts.push(`OG説明文: ${data.ogDescription}`);
+    if (data.keywords) parts.push(`キーワード: ${data.keywords}`);
+    if (data.headings?.length) parts.push(`主な見出し:\n${data.headings.map(h => `- ${h}`).join("\n")}`);
+    if (data.links?.length) parts.push(`主なリンク:\n${data.links.map(l => `- ${l.text}: ${l.href}`).join("\n")}`);
+    if (data.bodyText) parts.push(`ページ本文（抜粋）:\n${data.bodyText}`);
+    return parts.join("\n\n");
+  };
+
+  /* Claude APIコール */
+  const callClaude = async (siteInfo) => {
     const sys = buildSystem();
     const res = await fetch(API_ENDPOINT, {
       method: "POST",
@@ -268,61 +293,12 @@ ${PURPOSE_PROMPTS[purpose]}
         system: sys,
         messages: [{
           role: "user",
-          content: `以下の企業情報をもとにシナリオJSONを生成してください。JSONのみ出力。\n\n${siteInfo}`,
+          content: `以下の企業サイトから取得した情報をもとに、シナリオJSONを生成してください。JSONのみ出力。\n\n${siteInfo}`,
         }],
       }),
     });
     if (!res.ok) { const t = await res.text(); throw new Error(`API ${res.status}: ${t}`); }
     return res.json();
-  };
-
-  /* web_search付きAPIコール + tool_use処理 */
-  const callWithSearch = async (userMsg) => {
-    const sys = buildSystem();
-    // Step A: web_search起動
-    const resA = await fetch(API_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: maxTokens,
-        system: sys,
-        messages: [{ role: "user", content: userMsg }],
-        tools: [{ type: "web_search_20250305", name: "web_search" }],
-        tool_choice: { type: "auto" },
-      }),
-    });
-    if (!resA.ok) { const t = await resA.text(); throw new Error(`API(A) ${resA.status}: ${t}`); }
-    const dataA = await resA.json();
-
-    // tool_use がなければ直接テキスト返却
-    const hasToolUse = dataA.content?.some(b => b.type === "tool_use");
-    if (!hasToolUse) {
-      return dataA.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "";
-    }
-
-    // Step B: tool_result を送って最終生成
-    const toolResults = dataA.content
-      .filter(b => b.type === "tool_use")
-      .map(b => ({ type: "tool_result", tool_use_id: b.id, content: "Search completed." }));
-
-    const resB = await fetch(API_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: maxTokens,
-        system: sys,
-        messages: [
-          { role: "user", content: userMsg },
-          { role: "assistant", content: dataA.content },
-          { role: "user", content: toolResults },
-        ],
-      }),
-    });
-    if (!resB.ok) { const t = await resB.text(); throw new Error(`API(B) ${resB.status}: ${t}`); }
-    const dataB = await resB.json();
-    return dataB.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "";
   };
 
   const generate = useCallback(async () => {
@@ -334,25 +310,27 @@ ${PURPOSE_PROMPTS[purpose]}
     setShowDebug(false);
 
     try {
-      // ── 1. web_search でサイト情報取得 + シナリオ生成 ──
-      setStatus("🌐 企業サイトを調査中...");
-      const userMsg = `企業URL: ${url}\n\nこの企業サイトを検索・調査して、動画チャットボットシナリオをJSONで出力してください。JSONのみ出力。`;
-      let text = await callWithSearch(userMsg);
+      // ── 1. URLを直接フェッチして企業情報を取得 ──
+      setStatus("🌐 企業サイトを取得中...");
+      const siteData = await fetchSiteInfo(url);
+
+      let siteInfo;
+      if (siteData.error) {
+        setStatus("⚠ サイト取得に失敗、URLのみで生成...");
+        siteInfo = `企業URL: ${url}\nサイト取得エラー: ${siteData.error}\nこのURLの企業サイトのサービス・特徴を推測してシナリオを設計してください。`;
+      } else {
+        siteInfo = formatSiteInfo(siteData);
+      }
+
+      // ── 2. Claude APIでシナリオ生成 ──
+      setStatus("🤖 シナリオを生成中...");
+      const data = await callClaude(siteInfo);
+      const text = data.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "";
       setDebugRaw(text);
 
-      // ── 2. JSON抽出 ──
+      // ── 3. JSON抽出 ──
       setStatus("📋 シナリオを解析中...");
-      let parsed = extractJSON(text);
-
-      // ── 3. フォールバック：直接生成 ──
-      if (!parsed?.nodes?.length) {
-        setStatus("🔄 再生成中（ツールなし）...");
-        const siteInfo = `企業URL: ${url}\nサービス内容: このURLの企業サイトのサービス・特徴をもとにシナリオを設計してください。`;
-        const data2 = await callDirect(siteInfo);
-        text = data2.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "";
-        setDebugRaw(text);
-        parsed = extractJSON(text);
-      }
+      const parsed = extractJSON(text);
 
       if (!parsed?.nodes?.length) {
         throw new Error("JSONの解析に失敗しました。\n「デバッグ情報」でAPIレスポンスを確認できます。");
