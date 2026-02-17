@@ -185,7 +185,6 @@ export default function App() {
   const [debugRaw, setDebugRaw] = useState("");
   const [showDebug, setShowDebug] = useState(false);
   const [nodeCount, setNodeCount] = useState(13);
-  const [scriptCount, setScriptCount] = useState(1);
   const [purpose, setPurpose] = useState("CV最大化");
 
   const NODE_STRUCTURES = {
@@ -247,7 +246,6 @@ export default function App() {
 構造ルール:
 ${NODE_STRUCTURES[nodeCount]}
 - 1秒≒7文字
-- トークスクリプトのバリエーション: 各ノードにつき${scriptCount}パターンのscriptを生成してください。${scriptCount > 1 ? `scriptフィールドは配列にして${scriptCount}個の異なる表現パターンを含めてください。` : ""}
 
 目的:
 ${PURPOSE_PROMPTS[purpose]}
@@ -344,7 +342,7 @@ ${PURPOSE_PROMPTS[purpose]}
     } finally {
       setLoading(false);
     }
-  }, [url, nodeCount, scriptCount, purpose]);
+  }, [url, nodeCount, purpose]);
 
   const downloadCSV = () => {
     if (!scenario) return;
@@ -395,14 +393,6 @@ ${PURPOSE_PROMPTS[purpose]}
               <div className="setting-options">
                 {[4, 13, 40].map(v => (
                   <button key={v} className={`opt-btn${nodeCount === v ? " active" : ""}`} onClick={() => setNodeCount(v)}>{v}</button>
-                ))}
-              </div>
-            </div>
-            <div className="setting-group">
-              <span className="setting-label">スクリプト数</span>
-              <div className="setting-options">
-                {[1, 2, 3, 5].map(v => (
-                  <button key={v} className={`opt-btn${scriptCount === v ? " active" : ""}`} onClick={() => setScriptCount(v)}>{v}</button>
                 ))}
               </div>
             </div>
