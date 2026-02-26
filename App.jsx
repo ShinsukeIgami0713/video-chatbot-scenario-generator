@@ -185,6 +185,8 @@ export default function App() {
   const [showDebug, setShowDebug] = useState(false);
   const [qasetCount, setQasetCount] = useState(5);
   const [purpose, setPurpose] = useState("CV最大化");
+  const [editingId, setEditingId] = useState(null);
+  const [editedData, setEditedData] = useState({});
 
   const QASET_STRUCTURES = {
     5: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)
@@ -326,6 +328,29 @@ ${PURPOSE_PROMPTS[purpose]}
     }
   }, [url, qasetCount, purpose]);
 
+  const startEdit = (node) => {
+    setEditingId(node.id);
+    setEditedData({
+      script: node.script,
+      cta_label: node.cta_label,
+      cta_link: node.cta_link,
+    });
+  };
+
+  const saveEdit = (nodeId) => {
+    const updatedNodes = scenario.nodes.map(n =>
+      n.id === nodeId ? { ...n, ...editedData } : n
+    );
+    setScenario({ ...scenario, nodes: updatedNodes });
+    setEditingId(null);
+    setEditedData({});
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditedData({});
+  };
+
   const downloadCSV = () => {
     if (!scenario) return;
     const h = ["動画ID","Question","Answer（Script）","文字数","秒数","詳細 Label","詳細 Link","CTA Label","CTA Link"];
@@ -437,6 +462,7 @@ ${PURPOSE_PROMPTS[purpose]}
                       <th>文字数</th><th>秒数</th>
                       <th>詳細 Label</th><th>詳細 Link</th>
                       <th>CTA Label</th><th>CTA Link</th>
+                      <th>操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -444,9 +470,34 @@ ${PURPOSE_PROMPTS[purpose]}
                       <tr key={n.id}>
                         <td className="td-id">{n.id}</td>
                         <td className="td-q">{n.question}</td>
-                        <td className="td-script">{n.script}</td>
-                        <td className="td-num">{n.script?.length ?? 0}</td>
-                        <td className="td-num">{Math.ceil((n.script?.length ?? 0) / 7)}s</td>
+
+                        {/* Script 編集可能 */}
+                        <td className="td-script" style={editingId === n.id ? {background: 'rgba(45,80,22,.08)'} : {}}>
+                          {editingId === n.id ? (
+                            <textarea
+                              value={editedData.script || ''}
+                              onChange={(e) => setEditedData({...editedData, script: e.target.value})}
+                              style={{
+                                width: '100%',
+                                minHeight: '80px',
+                                background: '#0a0a0a',
+                                border: '1px solid #2D5016',
+                                borderRadius: '6px',
+                                padding: '8px',
+                                color: '#ddd',
+                                fontSize: '12px',
+                                fontFamily: 'Noto Sans JP, sans-serif',
+                                resize: 'vertical',
+                              }}
+                            />
+                          ) : (
+                            n.script
+                          )}
+                        </td>
+
+                        <td className="td-num">{(editingId === n.id ? editedData.script : n.script)?.length ?? 0}</td>
+                        <td className="td-num">{Math.ceil(((editingId === n.id ? editedData.script : n.script)?.length ?? 0) / 7)}s</td>
+
                         <td className="td-link">
                           {n.detail_link
                             ? <a href={n.detail_link} target="_blank" rel="noreferrer">{n.detail_label || "詳細"}</a>
@@ -455,13 +506,106 @@ ${PURPOSE_PROMPTS[purpose]}
                         <td className="td-link" style={{fontSize:"9px",color:"#444",maxWidth:180,wordBreak:"break-all"}}>
                           {n.detail_link || "—"}
                         </td>
-                        <td className="td-link">
-                          {n.cta_label && <span className="cta-chip">{n.cta_label}</span>}
+
+                        {/* CTA Label 編集可能 */}
+                        <td className="td-link" style={editingId === n.id ? {background: 'rgba(45,80,22,.08)'} : {}}>
+                          {editingId === n.id ? (
+                            <input
+                              type="text"
+                              value={editedData.cta_label || ''}
+                              onChange={(e) => setEditedData({...editedData, cta_label: e.target.value})}
+                              style={{
+                                width: '100%',
+                                background: '#0a0a0a',
+                                border: '1px solid #2D5016',
+                                borderRadius: '6px',
+                                padding: '6px 8px',
+                                color: '#ddd',
+                                fontSize: '11px',
+                                fontFamily: 'Noto Sans JP, sans-serif',
+                              }}
+                            />
+                          ) : (
+                            n.cta_label && <span className="cta-chip">{n.cta_label}</span>
+                          )}
                         </td>
-                        <td className="td-link" style={{fontSize:"9px"}}>
-                          {n.cta_link
-                            ? <a href={n.cta_link} target="_blank" rel="noreferrer">{n.cta_link}</a>
-                            : "—"}
+
+                        {/* CTA Link 編集可能 */}
+                        <td className="td-link" style={editingId === n.id ? {fontSize:"9px", background: 'rgba(45,80,22,.08)'} : {fontSize:"9px"}}>
+                          {editingId === n.id ? (
+                            <input
+                              type="text"
+                              value={editedData.cta_link || ''}
+                              onChange={(e) => setEditedData({...editedData, cta_link: e.target.value})}
+                              style={{
+                                width: '100%',
+                                background: '#0a0a0a',
+                                border: '1px solid #2D5016',
+                                borderRadius: '6px',
+                                padding: '6px 8px',
+                                color: '#ddd',
+                                fontSize: '10px',
+                                fontFamily: 'Space Mono, monospace',
+                              }}
+                            />
+                          ) : (
+                            n.cta_link
+                              ? <a href={n.cta_link} target="_blank" rel="noreferrer">{n.cta_link}</a>
+                              : "—"
+                          )}
+                        </td>
+
+                        {/* 編集/保存/キャンセルボタン */}
+                        <td style={{padding: '8px', whiteSpace: 'nowrap'}}>
+                          {editingId === n.id ? (
+                            <div style={{display: 'flex', gap: '4px'}}>
+                              <button
+                                onClick={() => saveEdit(n.id)}
+                                style={{
+                                  background: '#2D5016',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  padding: '4px 10px',
+                                  fontSize: '10px',
+                                  cursor: 'pointer',
+                                  fontWeight: '700',
+                                }}
+                              >
+                                保存
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                style={{
+                                  background: 'transparent',
+                                  color: '#888',
+                                  border: '1px solid #333',
+                                  borderRadius: '4px',
+                                  padding: '4px 10px',
+                                  fontSize: '10px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                キャンセル
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => startEdit(n)}
+                              disabled={editingId !== null}
+                              style={{
+                                background: 'transparent',
+                                color: editingId !== null ? '#444' : '#6B9D3E',
+                                border: '1px solid #2a2a2a',
+                                borderRadius: '4px',
+                                padding: '4px 10px',
+                                fontSize: '10px',
+                                cursor: editingId !== null ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              編集
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
