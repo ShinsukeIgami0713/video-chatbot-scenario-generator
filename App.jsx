@@ -446,8 +446,8 @@ ${PURPOSE_PROMPTS[purpose]}
                         <td className="td-id">{n.id}</td>
                         <td className="td-q">{n.question}</td>
                         <td className="td-script">{n.script}</td>
-                        <td className="td-num">{n.chars}</td>
-                        <td className="td-num">{n.seconds}s</td>
+                        <td className="td-num">{n.script?.length ?? 0}</td>
+                        <td className="td-num">{Math.ceil((n.script?.length ?? 0) / 7)}s</td>
                         <td className="td-link">
                           {n.detail_link
                             ? <a href={n.detail_link} target="_blank" rel="noreferrer">{n.detail_label || "詳細"}</a>
