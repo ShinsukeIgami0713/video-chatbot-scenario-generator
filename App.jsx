@@ -184,13 +184,18 @@ export default function App() {
   const [error, setError] = useState("");
   const [debugRaw, setDebugRaw] = useState("");
   const [showDebug, setShowDebug] = useState(false);
-  const [nodeCount, setNodeCount] = useState(13);
+  const [qasetCount, setQasetCount] = useState(5);
   const [purpose, setPurpose] = useState("CV最大化");
 
-  const NODE_STRUCTURES = {
-    4: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)\n- id=2〜4: 第1階層の選択肢 3個 (type=branch, parent_id="1", 各5〜8秒)\n- 第2階層なし\n- 合計ノード数: 4個`,
-    13: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)\n- id=2〜4: 第1階層の選択肢 3〜4個 (type=branch, parent_id="1", 各5〜8秒)\n- id=2-1,2-2,3-1,3-2…: 第2階層 各親に2〜3個 (type=sub, parent_idは親のid, 各8〜12秒)\n- 合計ノード数: 約13個`,
-    40: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)\n- id=2〜5: 第1階層の選択肢 4〜5個 (type=branch, parent_id="1", 各5〜8秒)\n- id=2-1,2-2,3-1,3-2…: 第2階層 各親に3〜4個 (type=sub, parent_idは親のid, 各8〜12秒)\n- id=2-1-1,2-1-2…: 第3階層 各親に2〜3個 (type=detail, parent_idは親のid, 各10〜15秒)\n- 合計ノード数: 約40個`,
+  const QASET_STRUCTURES = {
+    5: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)
+- id=2〜5: 4つの質問ノード (type=qa, parent_id="1", 各8〜12秒)
+- 合計QAset数: 5個（Opening + 4つのQ&A）`,
+
+    15: `- id=1: Opening (type=opening, parent_id=null, 80文字・11秒以内)
+- id=2〜5: 第1階層の質問 4個 (type=qa, parent_id="1", 各8〜12秒)
+- id=2-1,2-2,3-1,3-2…: 第2階層 各親に2〜3個のフォローアップ質問 (type=qa_detail, parent_idは親のid, 各10〜15秒)
+- 合計QAset数: 約15個`,
   };
 
   const PURPOSE_PROMPTS = {
@@ -214,28 +219,6 @@ export default function App() {
 - Openingでは「こんなお悩みありませんか？」のように視聴者の疑問を代弁して始めること
 - 各分岐では機能・特徴・仕組みをひとつずつ掘り下げ、具体例を必ず含めること
 - CTAは詳細ページ・導入事例・ヘルプガイドなど「もっと知りたい人向け」の誘導にすること`,
-
-    "ブランド認知": `目的: ブランド認知・好感度の向上（企業の世界観とストーリーを印象的に届ける）
-
-スクリプトのトーン: 情緒的でインスピレーショナル。ナレーションのように美しく、心に残る語り口。
-構成ルール:
-- 企業のビジョン・ミッション・世界観を前面に出し、「何を売っているか」より「なぜ存在するか」を伝えること
-- 感情に訴えるストーリーテリングを使うこと（創業エピソード、顧客の変化ストーリー、社会への想いなど）
-- ブランドの独自性・差別化ポイントを明確に強調すること（「私たちだけの〜」「他にはない〜」など）
-- Openingでは企業の理念やビジョンを印象的な一言で始めること
-- 各分岐では企業の価値観・文化・取り組みを異なる切り口で紹介すること
-- CTAはSNSフォロー・ブランドサイト・ストーリー動画など、ブランド体験を深める誘導にすること`,
-
-    "リード獲得": `目的: リード獲得（見込み顧客の連絡先・情報を自然な流れで獲得する）
-
-スクリプトのトーン: 共感的でコンサルティング的。視聴者の悩みに寄り添い、信頼を構築する語り口。
-構成ルール:
-- 必ず課題・悩みへの共感から始めること（「○○でお困りではありませんか？」「△△で悩んでいる方は多いです」など）
-- 解決策としての自社サービスを押し付けず自然に提示すること（「実は、こんな方法があります」のように）
-- 各分岐の末端には必ずリード獲得につながる導線を含めること（資料請求・ホワイトペーパーDL・無料相談予約・メルマガ登録・無料トライアルなど）
-- Openingでは業界共通の課題を提示し、「解決策を一緒に見ていきましょう」と誘導すること
-- 中間ノードでは課題の深掘り→原因分析→解決の方向性を段階的に示すこと
-- CTAは「まずは無料で○○してみませんか？」のように、ハードルの低いアクションにすること`,
   };
 
   const buildSystem = () => `あなたは企業の動画チャットボットシナリオ設計の専門家です。
@@ -244,7 +227,7 @@ export default function App() {
 {"company_name":"企業名","brand_color":"#HEX","nodes":[{"id":"1","parent_id":null,"type":"opening","label":"Opening","question":"Opening","script":"スクリプト本文","chars":80,"seconds":11,"cta_label":"CTA文言","cta_link":"https://...","detail_label":null,"detail_link":null},{"id":"2","parent_id":"1","type":"branch","label":"質問ラベル","question":"質問文","script":"スクリプト本文","chars":42,"seconds":6,"cta_label":"CTA文言","cta_link":"https://...","detail_label":"詳細はこちら","detail_link":"https://..."}]}
 
 構造ルール:
-${NODE_STRUCTURES[nodeCount]}
+${QASET_STRUCTURES[qasetCount]}
 - 1秒≒7文字
 
 目的:
@@ -252,7 +235,7 @@ ${PURPOSE_PROMPTS[purpose]}
 
 絶対に守ること: 出力はJSON文字列のみ。{ で始まり } で終わること。`;
 
-  const maxTokens = nodeCount >= 40 ? 8000 : 4000;
+  const maxTokens = qasetCount >= 15 ? 8000 : 4000;
 
   /* URLを直接フェッチして企業情報を取得 */
   const fetchSiteInfo = async (targetUrl) => {
@@ -342,7 +325,7 @@ ${PURPOSE_PROMPTS[purpose]}
     } finally {
       setLoading(false);
     }
-  }, [url, nodeCount, purpose]);
+  }, [url, qasetCount, purpose]);
 
   const downloadCSV = () => {
     if (!scenario) return;
@@ -389,19 +372,25 @@ ${PURPOSE_PROMPTS[purpose]}
 
           <div className="settings">
             <div className="setting-group">
-              <span className="setting-label">ノード数</span>
+              <span className="setting-label">QAset数</span>
               <div className="setting-options">
-                {[4, 13, 40].map(v => (
-                  <button key={v} className={`opt-btn${nodeCount === v ? " active" : ""}`} onClick={() => setNodeCount(v)}>{v}</button>
-                ))}
+                <button className={`opt-btn${qasetCount === 5 ? " active" : ""}`} onClick={() => setQasetCount(5)}>
+                  コンパクト（5）
+                </button>
+                <button className={`opt-btn${qasetCount === 15 ? " active" : ""}`} onClick={() => setQasetCount(15)}>
+                  詳細版（15）
+                </button>
               </div>
             </div>
             <div className="setting-group">
               <span className="setting-label">目的</span>
               <div className="setting-options">
-                {["CV最大化", "理解促進", "ブランド認知", "リード獲得"].map(v => (
-                  <button key={v} className={`opt-btn${purpose === v ? " active" : ""}`} onClick={() => setPurpose(v)}>{v}</button>
-                ))}
+                <button className={`opt-btn${purpose === "CV最大化" ? " active" : ""}`} onClick={() => setPurpose("CV最大化")}>
+                  CV最大化
+                </button>
+                <button className={`opt-btn${purpose === "理解促進" ? " active" : ""}`} onClick={() => setPurpose("理解促進")}>
+                  理解促進
+                </button>
               </div>
             </div>
           </div>
