@@ -11,7 +11,7 @@ const style = `
   .app { min-height: 100vh; background: #0d0d0d; }
 
   .header { padding: 28px 40px 20px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 14px; }
-  .logo-badge { width: 40px; height: 40px; background: #FF6B00; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: white; flex-shrink: 0; }
+  .logo-badge { width: 40px; height: 40px; background: #2D5016; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: white; flex-shrink: 0; }
   .header-text h1 { font-size: 18px; font-weight: 700; color: #fff; }
   .header-text p { font-size: 11px; color: #555; margin-top: 3px; }
 
@@ -20,17 +20,17 @@ const style = `
   .url-section { background: #141414; border: 1px solid #252525; border-radius: 14px; padding: 28px 32px; margin-bottom: 36px; }
   .url-section h2 { font-size: 11px; font-weight: 700; color: #555; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 14px; font-family: 'Space Mono', monospace; }
   .url-input { width: 100%; background: #0a0a0a; border: 1px solid #2c2c2c; border-radius: 9px; padding: 13px 16px; font-size: 14px; color: #eee; outline: none; font-family: 'Space Mono', monospace; transition: border-color .2s; margin-bottom: 18px; }
-  .url-input:focus { border-color: #FF6B00; }
+  .url-input:focus { border-color: #2D5016; }
   .url-input::placeholder { color: #333; }
-  .gen-btn { background: #FF6B00; color: #fff; border: none; border-radius: 9px; padding: 13px 32px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; font-family: 'Noto Sans JP', sans-serif; width: 100%; margin-top: 20px; }
-  .gen-btn:hover:not(:disabled) { background: #ff8533; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,107,0,.3); }
+  .gen-btn { background: #2D5016; color: #fff; border: none; border-radius: 9px; padding: 13px 32px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; font-family: 'Noto Sans JP', sans-serif; width: 100%; margin-top: 20px; }
+  .gen-btn:hover:not(:disabled) { background: #4A7C2C; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(45,80,22,.3); }
   .gen-btn:disabled { background: #333; cursor: not-allowed; transform: none; box-shadow: none; }
 
   .progress { margin-top: 16px; }
   .progress-bar { height: 2px; background: #1e1e1e; border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, #FF6B00, #ffad66); animation: prog 1.8s ease-in-out infinite; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #2D5016, #4A7C2C); animation: prog 1.8s ease-in-out infinite; }
   @keyframes prog { 0%{width:0;margin-left:0} 60%{width:65%;margin-left:0} 100%{width:0;margin-left:100%} }
-  .status-text { font-size: 12px; color: #FF6B00; margin-top: 10px; font-family: 'Space Mono', monospace; }
+  .status-text { font-size: 12px; color: #4A7C2C; margin-top: 10px; font-family: 'Space Mono', monospace; }
   .error-msg { font-size: 12px; color: #ff5555; margin-top: 10px; font-family: 'Space Mono', monospace; background: rgba(255,50,50,.06); border: 1px solid rgba(255,50,50,.2); padding: 10px 14px; border-radius: 8px; white-space: pre-wrap; }
   .debug-btn { background: transparent; border: 1px solid #333; color: #666; border-radius: 6px; padding: 5px 12px; font-size: 11px; cursor: pointer; margin-top: 8px; font-family: 'Space Mono', monospace; }
   .debug-btn:hover { border-color: #555; color: #999; }
@@ -41,7 +41,7 @@ const style = `
   .panel { background: #141414; border: 1px solid #252525; border-radius: 14px; overflow: hidden; }
   .panel-head { padding: 18px 24px; border-bottom: 1px solid #1e1e1e; display: flex; align-items: center; justify-content: space-between; }
   .panel-title { font-size: 11px; font-weight: 700; color: #555; letter-spacing: 2px; text-transform: uppercase; font-family: 'Space Mono', monospace; }
-  .panel-badge { background: #FF6B00; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; font-family: 'Space Mono', monospace; }
+  .panel-badge { background: #2D5016; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; font-family: 'Space Mono', monospace; }
 
   .tree-wrap { overflow-x: auto; padding: 28px; }
 
@@ -50,17 +50,17 @@ const style = `
   th { background: #0e0e0e; padding: 11px 14px; text-align: left; font-size: 9px; font-weight: 700; color: #444; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #1e1e1e; font-family: 'Space Mono', monospace; white-space: nowrap; }
   td { padding: 13px 14px; border-bottom: 1px solid #1a1a1a; vertical-align: top; line-height: 1.6; }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,107,0,.03); }
-  .td-id { font-family: 'Space Mono', monospace; font-size: 11px; color: #FF6B00; font-weight: 700; white-space: nowrap; }
+  tr:hover td { background: rgba(45,80,22,.03); }
+  .td-id { font-family: 'Space Mono', monospace; font-size: 11px; color: #2D5016; font-weight: 700; white-space: nowrap; }
   .td-q { color: #888; min-width: 140px; font-size: 11px; }
   .td-script { color: #ddd; min-width: 240px; max-width: 380px; font-size: 12px; }
   .td-num { text-align: center; font-family: 'Space Mono', monospace; font-size: 11px; color: #555; white-space: nowrap; }
   .td-link { font-size: 10px; }
-  .td-link a { color: #6699ff; text-decoration: none; }
+  .td-link a { color: #6B9D3E; text-decoration: none; }
   .td-link a:hover { text-decoration: underline; }
-  .cta-chip { display: inline-block; background: #FF6B00; color: #fff; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+  .cta-chip { display: inline-block; background: #2D5016; color: #fff; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
   .dl-btn { background: transparent; border: 1px solid #2a2a2a; color: #666; border-radius: 7px; padding: 7px 14px; font-size: 11px; cursor: pointer; transition: all .2s; font-family: 'Noto Sans JP', sans-serif; }
-  .dl-btn:hover { border-color: #FF6B00; color: #FF6B00; }
+  .dl-btn:hover { border-color: #2D5016; color: #2D5016; }
 
   .settings { display: flex; gap: 20px; margin-top: 18px; flex-wrap: wrap; }
   .setting-group { display: flex; flex-direction: column; gap: 8px; }
@@ -68,7 +68,7 @@ const style = `
   .setting-options { display: flex; gap: 6px; flex-wrap: wrap; }
   .opt-btn { background: #0a0a0a; border: 1px solid #2c2c2c; border-radius: 7px; padding: 8px 14px; font-size: 12px; color: #888; cursor: pointer; transition: all .2s; font-family: 'Noto Sans JP', sans-serif; white-space: nowrap; }
   .opt-btn:hover { border-color: #555; color: #ccc; }
-  .opt-btn.active { background: #1c0e00; border-color: #FF6B00; color: #FF6B00; font-weight: 700; }
+  .opt-btn.active { background: #1a1f15; border-color: #2D5016; color: #4A7C2C; font-weight: 700; }
 
   .empty { text-align: center; padding: 80px 40px; color: #333; }
   .empty h3 { font-size: 16px; color: #444; margin-bottom: 8px; }
@@ -123,8 +123,8 @@ function ScenarioTree({ nodes }) {
   const W = maxX + 40, H = maxY + 40;
 
   const col = t => {
-    if (t === "opening") return { bg: "#1c0e00", stroke: "#FF6B00", text: "#FF6B00" };
-    if (t === "cta")     return { bg: "#FF6B00", stroke: "#FF6B00", text: "#fff" };
+    if (t === "opening") return { bg: "#1a1f15", stroke: "#2D5016", text: "#4A7C2C" };
+    if (t === "cta")     return { bg: "#2D5016", stroke: "#2D5016", text: "#fff" };
     if (t === "branch")  return { bg: "#1a1a1a", stroke: "#3a3a3a", text: "#ccc" };
     return { bg: "#111", stroke: "#2a2a2a", text: "#888" };
   };
@@ -176,7 +176,7 @@ function ScenarioTree({ nodes }) {
 
 /* ─── Main App ─── */
 export default function App() {
-  const [url, setUrl] = useState("https://degipro.com/");
+  const [url, setUrl] = useState("https://bonsai-video.com/");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [scenario, setScenario] = useState(null);
