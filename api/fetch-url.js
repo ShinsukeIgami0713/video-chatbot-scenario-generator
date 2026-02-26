@@ -43,8 +43,17 @@ export default async function handler(req, res) {
     const keywords = extract(/<meta[^>]+name=["']keywords["'][^>]+content=["']([\s\S]*?)["']/i)
       || extract(/<meta[^>]+content=["']([\s\S]*?)["'][^>]+name=["']keywords["']/i);
 
+    // メインコンテンツ領域を優先抽出（main > article > div[id/class*=content] > body全体）
+    const extractMain = (src) => {
+      const m = src.match(/<main[\s\S]*?>([\s\S]*?)<\/main>/i)
+        || src.match(/<article[\s\S]*?>([\s\S]*?)<\/article>/i)
+        || src.match(/<[^>]+(?:id|class)=["'][^"']*\bcontent\b[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)>/i);
+      return m ? m[1] : src;
+    };
+
     // Strip tags and get body text
-    let bodyText = html
+    const rawContent = extractMain(html);
+    let bodyText = rawContent
       .replace(/<script[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?<\/style>/gi, "")
       .replace(/<nav[\s\S]*?<\/nav>/gi, "")
@@ -62,9 +71,9 @@ export default async function handler(req, res) {
       .replace(/\s+/g, " ")
       .trim();
 
-    // Limit to ~4000 chars to keep prompt size manageable
-    if (bodyText.length > 4000) {
-      bodyText = bodyText.slice(0, 4000) + "...";
+    // Limit to 5000 chars
+    if (bodyText.length > 5000) {
+      bodyText = bodyText.slice(0, 5000) + "...";
     }
 
     // Extract headings for structure overview
