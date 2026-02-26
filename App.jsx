@@ -43,8 +43,6 @@ const style = `
   .panel-title { font-size: 11px; font-weight: 700; color: #555; letter-spacing: 2px; text-transform: uppercase; font-family: 'Space Mono', monospace; }
   .panel-badge { background: #2D5016; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; font-family: 'Space Mono', monospace; }
 
-  .tree-wrap { overflow-x: auto; padding: 28px; }
-
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th { background: #0e0e0e; padding: 11px 14px; text-align: left; font-size: 9px; font-weight: 700; color: #444; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #1e1e1e; font-family: 'Space Mono', monospace; white-space: nowrap; }
@@ -90,88 +88,6 @@ function extractJSON(raw) {
     console.error("JSON parse error:", e, s.slice(start, end + 1).slice(0, 200));
     return null;
   }
-}
-
-/* ─── SVG Tree ─── */
-function ScenarioTree({ nodes }) {
-  if (!nodes?.length) return null;
-
-  const NW = 160, NH = 60, HGAP = 60, VGAP = 28;
-  const map = {};
-  nodes.forEach(n => { map[n.id] = { ...n, children: [] }; });
-  const roots = [];
-  nodes.forEach(n => {
-    if (!n.parent_id) roots.push(map[n.id]);
-    else if (map[n.parent_id]) map[n.parent_id].children.push(map[n.id]);
-  });
-
-  let maxX = 0, maxY = 0;
-  function place(nd, x, y) {
-    nd.x = x; nd.y = y;
-    maxX = Math.max(maxX, x + NW); maxY = Math.max(maxY, y + NH);
-    if (!nd.children.length) return NH + VGAP;
-    let used = 0;
-    nd.children.forEach(ch => { used += place(ch, x + NW + HGAP, y + used); });
-    const fc = nd.children[0], lc = nd.children[nd.children.length - 1];
-    nd.y = (fc.y + lc.y) / 2;
-    maxY = Math.max(maxY, nd.y + NH);
-    return Math.max(used, NH + VGAP);
-  }
-  let ty = 0;
-  roots.forEach(r => { ty += place(r, 32, ty); });
-
-  const W = maxX + 40, H = maxY + 40;
-
-  const col = t => {
-    if (t === "opening") return { bg: "#1a1f15", stroke: "#2D5016", text: "#4A7C2C" };
-    if (t === "cta")     return { bg: "#2D5016", stroke: "#2D5016", text: "#fff" };
-    if (t === "branch")  return { bg: "#1a1a1a", stroke: "#3a3a3a", text: "#ccc" };
-    return { bg: "#111", stroke: "#2a2a2a", text: "#888" };
-  };
-
-  const edges = nodes.map(n => {
-    const nd = map[n.id];
-    if (!nd?.parent_id || !map[nd.parent_id]) return null;
-    const p = map[nd.parent_id];
-    const x1 = p.x + NW, y1 = p.y + NH / 2;
-    const x2 = nd.x,     y2 = nd.y + NH / 2;
-    const mx = (x1 + x2) / 2;
-    return (
-      <path
-        key={`e-${p.id}-${nd.id}`}
-        d={`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`}
-        stroke="#2a2a2a" strokeWidth="1.5" fill="none"
-      />
-    );
-  });
-
-  return (
-    <div className="tree-wrap">
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ minWidth: W }}>
-        {edges}
-        {Object.values(map).map(nd => {
-          const c = col(nd.type);
-          const raw = nd.label || nd.question || nd.id;
-          const label = raw.length > 16 ? raw.slice(0, 15) + "…" : raw;
-          return (
-            <g key={nd.id}>
-              <rect x={nd.x} y={nd.y} width={NW} height={NH} rx={8}
-                fill={c.bg} stroke={c.stroke}
-                strokeWidth={nd.type === "opening" ? 2 : 1.5} />
-              <text x={nd.x + 8} y={nd.y + 14} fill="#3a3a3a" fontSize="8"
-                fontFamily="Space Mono, monospace" fontWeight="700">{nd.id}</text>
-              <text x={nd.x + 8} y={nd.y + 30} fill={c.text} fontSize="10"
-                fontFamily="Noto Sans JP, sans-serif">{label}</text>
-              {nd.seconds != null && (
-                <text x={nd.x + 8} y={nd.y + 46} fill="#444" fontSize="9"
-                  fontFamily="Space Mono, monospace">{nd.seconds}s · {nd.chars}文字</text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
 }
 
 /* ─── Main App ─── */
@@ -442,13 +358,6 @@ ${PURPOSE_PROMPTS[purpose]}
 
         {scenario ? (
           <div className="results">
-            <div className="panel">
-              <div className="panel-head">
-                <span className="panel-title">Scenario Flow — {scenario.company_name}</span>
-              </div>
-              <ScenarioTree nodes={scenario.nodes} />
-            </div>
-
             <div className="panel">
               <div className="panel-head">
                 <span className="panel-title">{scenario.company_name} QAset</span>
