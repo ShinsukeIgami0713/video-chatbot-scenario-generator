@@ -291,7 +291,7 @@ ${PURPOSE_PROMPTS[purpose]}
         <div className="logo-badge">▶</div>
         <div className="header-text">
           <h1>bonsai cast QAset generator</h1>
-          <p>企業URLから動画チャットボットシナリオ（樹形図＋スクリプト）を自動生成</p>
+          <p>企業URLから動画のQAset（スクリプト含）を自動生成</p>
         </div>
       </header>
 
