@@ -19,11 +19,10 @@ const style = `
 
   .url-section { background: #141414; border: 1px solid #252525; border-radius: 14px; padding: 28px 32px; margin-bottom: 36px; }
   .url-section h2 { font-size: 11px; font-weight: 700; color: #555; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 14px; font-family: 'Space Mono', monospace; }
-  .url-row { display: flex; gap: 10px; }
-  .url-input { flex: 1; background: #0a0a0a; border: 1px solid #2c2c2c; border-radius: 9px; padding: 13px 16px; font-size: 14px; color: #eee; outline: none; font-family: 'Space Mono', monospace; transition: border-color .2s; }
+  .url-input { width: 100%; background: #0a0a0a; border: 1px solid #2c2c2c; border-radius: 9px; padding: 13px 16px; font-size: 14px; color: #eee; outline: none; font-family: 'Space Mono', monospace; transition: border-color .2s; margin-bottom: 18px; }
   .url-input:focus { border-color: #FF6B00; }
   .url-input::placeholder { color: #333; }
-  .gen-btn { background: #FF6B00; color: #fff; border: none; border-radius: 9px; padding: 13px 26px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all .2s; font-family: 'Noto Sans JP', sans-serif; }
+  .gen-btn { background: #FF6B00; color: #fff; border: none; border-radius: 9px; padding: 13px 32px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; font-family: 'Noto Sans JP', sans-serif; width: 100%; margin-top: 20px; }
   .gen-btn:hover:not(:disabled) { background: #ff8533; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,107,0,.3); }
   .gen-btn:disabled { background: #333; cursor: not-allowed; transform: none; box-shadow: none; }
 
@@ -358,27 +357,21 @@ ${PURPOSE_PROMPTS[purpose]}
       <main className="main">
         <div className="url-section">
           <h2>企業URL を入力</h2>
-          <div className="url-row">
-            <input
-              className="url-input" type="text" value={url}
-              onChange={e => setUrl(e.target.value)}
-              placeholder="https://example.co.jp"
-              onKeyDown={e => e.key === "Enter" && !loading && generate()}
-            />
-            <button className="gen-btn" onClick={generate} disabled={loading}>
-              {loading ? "生成中..." : "🎬 シナリオ生成"}
-            </button>
-          </div>
+          <input
+            className="url-input" type="text" value={url}
+            onChange={e => setUrl(e.target.value)}
+            placeholder="https://example.co.jp"
+          />
 
           <div className="settings">
             <div className="setting-group">
               <span className="setting-label">QAset数</span>
               <div className="setting-options">
                 <button className={`opt-btn${qasetCount === 5 ? " active" : ""}`} onClick={() => setQasetCount(5)}>
-                  コンパクト（5）
+                  コンパクト
                 </button>
                 <button className={`opt-btn${qasetCount === 15 ? " active" : ""}`} onClick={() => setQasetCount(15)}>
-                  詳細版（15）
+                  詳細版
                 </button>
               </div>
             </div>
@@ -394,6 +387,10 @@ ${PURPOSE_PROMPTS[purpose]}
               </div>
             </div>
           </div>
+
+          <button className="gen-btn" onClick={generate} disabled={loading}>
+            {loading ? "生成中..." : "生成"}
+          </button>
 
           {loading && (
             <div className="progress">
